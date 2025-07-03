@@ -43,7 +43,6 @@ function saveConfigsWithFlags($configs, $type, $outputDir, &$allMix) {
     $out = [];
     foreach ($configs as $cfg) {
         if (str_starts_with(trim($cfg), 'listen:')) {
-            // تبدیل به hysteria2://
             $encoded = base64_encode($cfg);
             $uri = "hysteria2://$encoded";
             $country = getCountryFromYaml($cfg);
@@ -63,11 +62,39 @@ function saveConfigsWithFlags($configs, $type, $outputDir, &$allMix) {
         }
     }
 
-    file_put_contents("$outputDir/{$type}.txt", implode("\n\n", $out));
-    echo "Saved $type configs (" . count($out) . " items)\n";
+    $filePath = "$outputDir/{$type}.txt";
+    if (!file_exists($filePath)) {
+        touch($filePath);
+    }
+    file_put_contents($filePath, implode("\n\n", $out));
+    echo "✅ Saved $type configs (" . count($out) . " items) to $filePath\n";
 }
 
+// --- خواندن فایل و پردازش لینک‌ها + کانفیگ‌ها ---
 $content = file_get_contents($inputFile);
+$lines = explode("\n", $content);
+$finalContent = '';
+
+// بررسی هر خط (سابسکریپشن یا کانفیگ مستقیم)
+foreach ($lines as $line) {
+    $line = trim($line);
+    if (!$line) continue;
+
+    if (filter_var($line, FILTER_VALIDATE_URL)) {
+        echo "🔁 Fetching subscription: $line\n";
+        $raw = @file_get_contents($line);
+        if ($raw) {
+            $decoded = base64_decode(trim($raw));
+            if ($decoded) {
+                $finalContent .= "\n" . $decoded;
+            }
+        }
+    } else {
+        $finalContent .= "\n" . $line;
+    }
+}
+
+// حالا `finalContent` شامل همه کانفیگ‌هاست
 $configs = [
     'vmess'     => [],
     'vless'     => [],
@@ -90,16 +117,15 @@ $regexPatterns = [
     'hy2'       => '/hy2:\/\/[a-zA-Z0-9@:%._+~#=\/?\-&]+/',
 ];
 
-// مرحله اول: استخراج URI-based
 foreach ($regexPatterns as $type => $pattern) {
-    preg_match_all($pattern, $content, $matches);
+    preg_match_all($pattern, $finalContent, $matches);
     if (!empty($matches[0])) {
         $configs[$type] = array_merge($configs[$type], $matches[0]);
     }
 }
 
-// استخراج YAML hysteria2
-preg_match_all('/(?s)listen:\s*.*?(?=(\n{2,}|\Z))/', $content, $yamlBlocks);
+// hysteria2 YAML-based
+preg_match_all('/(?s)listen:\s*.*?(?=(\n{2,}|\Z))/', $finalContent, $yamlBlocks);
 foreach ($yamlBlocks[0] as $block) {
     if (strpos($block, 'tls:') !== false || strpos($block, 'obfs:') !== false) {
         $configs['hysteria2'][] = trim($block);
@@ -107,14 +133,14 @@ foreach ($yamlBlocks[0] as $block) {
 }
 
 // wireguard
-preg_match_all('/(?s)\[Interface\].*?(?=(\n\[Peer\]|\Z))/', $content, $wgBlocks);
+preg_match_all('/(?s)\[Interface\].*?(?=(\n\[Peer\]|\Z))/', $finalContent, $wgBlocks);
 foreach ($wgBlocks[0] as $block) {
     if (strpos($block, 'PrivateKey') !== false) {
         $configs['wireguard'][] = trim($block);
     }
 }
 
-// خروجی هر نوع کانفیگ در فایل مجزا + ساخت mix.txt
+// ذخیره خروجی‌ها
 $mix = [];
 foreach ($configs as $type => $list) {
     if (!empty($list)) {
@@ -122,5 +148,8 @@ foreach ($configs as $type => $list) {
     }
 }
 
+if (!file_exists($mixFile)) {
+    touch($mixFile);
+}
 file_put_contents($mixFile, implode("\n\n", $mix));
-echo "Saved all configs to $mixFile\n";
+echo "✅ All configs saved to $mixFile\n";
