@@ -1,31 +1,36 @@
-name: Run Config Parser
+name: "VPNineh"
 
 on:
+  push:
+    paths:
+      - 'source.conf'
+  pull_request:
+    paths:
+      - 'source.conf'
   workflow_dispatch:
   schedule:
-    - cron: '0 */6 * * *' # هر ۶ ساعت یک‌بار
+    - cron: '0 */2 * * *'
 
 jobs:
-  parse-configs:
+  Collect:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
-
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
-
-      - name: Run PHP Script
-        run: php core.php
-
-      - name: Commit Updated Files
+          php-version: '7.4'
+          
+      - name: Execute PHP script
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add sub/*
-          git commit -m "🔄 Update config files"
+          php base.php
+          git config --global user.email "yebekhe@gmail.com"
+          git config --global user.name "yebekhe"
+          git config credential.helper store
+          git add -A
+          git commit -m "🚀 Last Run - $(TZ='Asia/Tehran' date '+%Y-%m-%d %H:%M:%S')"
           git push
-        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
