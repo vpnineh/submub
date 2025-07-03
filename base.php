@@ -76,7 +76,7 @@ function getTelegramChannelConfigs($username)
             );
             echo "@{$source} => PROGRESS: 100%\n";
         } else {
-            $username = str_replace("X" . ",", "", $username);
+            $username = str_replace($source . ",", "", $username);
             file_put_contents("source.conf", $username);
 
             $emptySource = file_get_contents("empty.conf");
