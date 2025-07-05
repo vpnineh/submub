@@ -39,22 +39,21 @@ function getTelegramChannelConfigs($username)
         $byType = [];
         foreach ($configs as $theType => $configsArray) {
             foreach ($configsArray as $config) {
-                if (is_valid($config)) {
-                    $fixedConfig = str_replace(
-                        "amp;",
-                        "",
-                        removeAngleBrackets($config)
-                    );
-                    $correctedConfig = correctConfig(
-                        "{$fixedConfig}",
-                        $theType,
-                        $source
-                    );
-                    $mix .= $correctedConfig . "\n";
-                    $$theType .= $correctedConfig . "\n";
-                    $$source .= $correctedConfig . "\n";
-                }
-            }
+    if (is_valid($config)) {
+        $fixedConfig = str_replace("amp;", "", removeAngleBrackets($config));
+        
+        // 🔴 اینجا چک می‌کنیم که کانفیگ شامل down نباشه
+        if (stripos($fixedConfig, 'down') !== false) {
+            continue; // از این کانفیگ رد شو
+        }
+
+        $correctedConfig = correctConfig("{$fixedConfig}", $theType, $source);
+
+        $mix .= $correctedConfig . "\n";
+        $$theType .= $correctedConfig . "\n";
+        $$source .= $correctedConfig . "\n";
+    }
+}
         }
 
         if (!empty(explode("\n", $$source))) {
