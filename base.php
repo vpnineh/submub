@@ -769,7 +769,7 @@ function sendMessage($botToken, $chatId, $message, $parse_mode, $keyboard)
 
 function generateHiddifyTags($type)
 {
-    $profileTitle = base64_encode("{$type} | HiN 🫧");
+    $profileTitle = base64_encode("{$type} | VPNineh 🫧");
     return "#profile-title: base64:{$profileTitle}\n#profile-update-interval: 1\n#subscription-userinfo: upload=0; download=0; total=10737418240000000; expire=2546249531\n#support-url: https://hingroup.t.me\n#profile-web-page-url: https://Here_is_Nowhere.t.me
 ";
 }
@@ -966,14 +966,14 @@ $keyboard = [
     ],
     [
         [
-            "text" => "🚹 گیتهاب HiN VPN 🚹",
+            "text" => "🚹 گیتهاب VPNineh 🚹",
             "url" =>
                 "https://github.com/vpnineh/tlgrm/blob/main/README.md",
         ],
     ],
 ];
 
-$message = "🔺 لینک های اشتراک HiN بروزرسانی شدن! 🔻
+$message = "🔺 لینک های اشتراک VPNineh بروزرسانی شدن! 🔻
 
 ⏱ آخرین آپدیت: 
 {$tehranTime}
